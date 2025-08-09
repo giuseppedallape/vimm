@@ -8,3 +8,9 @@ pip install -r requirements.txt
 pip install BeautifulSoup
 python main.py
 ```
+
+to launch with docker:
+
+```
+docker run -v [YOUR TXT LINKS]:/app/input.txt -v [FOLDER TO RECIVE GAMES]:/app/downloads vimm:latest
+```
