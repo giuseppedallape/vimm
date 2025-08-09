@@ -326,8 +326,32 @@ def main():
                         continue
                     print(f"[INPUT] Eseguo istruzione: {line}")
 
-                    print("[1] Recupero media ID")
-                    html_page = requests.get("https://vimm.net/vault/90991", verify=False)
+                    # extract digits at the end of the line
+                    match = re.search(r"(\d+)$", line)
+                    if match:
+                        digits = match.group(1)
+                        print(f"[INPUT] Trovati numeri alla fine della riga: {digits}")
+
+                    # Ensure downloaded.txt exists
+                    downloaded_path = Path("downloaded.txt")
+                    if not downloaded_path.exists():
+                        downloaded_path.touch()
+
+                    # if digits already exists in downloaded.txt, skip
+                    with downloaded_path.open("r", encoding="utf-8") as downloaded_file:
+                        if digits in downloaded_file.read():
+                            print(f"[INPUT] Già scaricato: {digits}, salto...")
+                            continue
+
+                    # save the digits in downloaded.txt
+                    with downloaded_path.open("a", encoding="utf-8") as downloaded_file:
+                        downloaded_file.write(f"{digits}\n")
+
+                    
+
+
+                    print(f"[1] Recupero media ID: {digits}")
+                    html_page = requests.get(f"https://vimm.net/vault/{digits}", verify=False)
                     media_id = extract_media_id_from_html(html_page.text)
                     print(f"[1] OK: Media ID estratto: {media_id}")
 
@@ -343,6 +367,12 @@ def main():
                     print(f"[3] OK: salvato in -> {out_path.resolve()}")
 
                     print("\n\n prossimo file...\n\n")
+
+        # clean input.txt
+        print("Pulizia input.txt...")
+        if input_file.exists():
+            input_file.unlink()
+        input_file.touch()
 
     except Exception as e:
         print(f"ERRORE: {e}", file=sys.stderr)
