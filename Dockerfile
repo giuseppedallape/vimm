@@ -13,5 +13,5 @@ COPY . /app
 
 RUN mkdir -p /app/download
 
-ENTRYPOINT ["python", "main.py"]
+ENTRYPOINT ["python", "-u", "main.py"]
 CMD []
