@@ -128,6 +128,30 @@ def extract_media_id_from_html(html_page: str) -> str | None:
         return input_tag["value"]
     return None
 
+def extract_media_id_latest_from_html(html_page: str) -> str | None:
+    soup = BeautifulSoup(html_page, "html.parser")
+    # Cerca la stringa json costante in uno script: const allMedia = [...];
+    script_tag = soup.find("script", string=re.compile(r"const allMedia\s*=\s*\[.*\];", re.DOTALL))
+    if not script_tag:
+        return None
+    match = re.search(r"const allMedia\s*=\s*(\[.*\]);", script_tag.string, re.DOTALL)
+    if not match:
+        return None
+    try:
+        json_data = json.loads(match.group(1))
+    except Exception:
+        return None
+    # Restituisce l'ID dell'ultimo media
+    return str(json_data[-1]["ID"]) if json_data else None
+
+def extract_action_url_from_html(html_page: str) -> str | None:
+    soup = BeautifulSoup(html_page, "html.parser")
+    form = soup.find("form", id="dl_form")
+    if not form:
+        return None
+    action_url = form.get("action")
+    return action_url if action_url else None
+
 
 # -------- FS helpers --------
 def ensure_dir(path: Path) -> None:
@@ -459,9 +483,14 @@ def main():
                         print(f"[1] ERRORE: mediaId non trovato per {digits}, salto...")
                         continue
 
+
+                    print(f"[1] Recupero media ID: {digits}")
+                    html_page = requests.get(f"https://vimm.net/vault/{digits}", verify=False)
+                    actionUrl = extract_action_url_from_html(html_page.text)
+                    media_id = extract_media_id_latest_from_html(html_page.text)
                     print(f"[1] OK: Media ID estratto: {media_id}")
                     print("[2] Costruzione URL finale")
-                    final_url = f"https://dl2.vimm.net/?mediaId={media_id}"
+                    final_url = f"https:{actionUrl}?mediaId={media_id}"
                     CONFIG["URL"] = final_url
                     print(f"[2] OK: URL finale per il download: {CONFIG['URL']}")
 
